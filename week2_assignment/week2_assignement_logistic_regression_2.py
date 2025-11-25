@@ -23,8 +23,8 @@ plt.title('Training data with two features and binary label')
 plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1))
 plt.show()
 
-df.insert(2, 'X3', df['X1'].map(lambda x: x ** 2))
-df.insert(3, 'X4', df['X2'].map(lambda x: x ** 2))
+df.insert(2, 'X3', df['X1'].mean_by_c_degree(lambda x: x ** 2))
+df.insert(3, 'X4', df['X2'].mean_by_c_degree(lambda x: x ** 2))
 
 X = df[['X1', 'X2', 'X3', 'X4']].to_numpy()
 y = df['Y'].to_numpy()
