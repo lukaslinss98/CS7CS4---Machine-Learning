@@ -1,0 +1,274 @@
+1.
+batch_size = 64 # how many independent sequences will we process in parallel?
+block_size = 256 # what is the maximum context length for predictions?
+max_iters = 5000
+eval_interval = 500
+learning_rate = 3e-4
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "mps" if torch.backends.mps.is_available() else "cpu"
+eval_iters = 200
+n_embd = 384 // 4
+n_head = 6
+n_layer = 6
+dropout = 0.2
+
+0.703528 M parameters
+step 0: train loss 3.6712, val loss 3.6706
+step 500: train loss 0.3727, val loss 0.3755
+step 1000: train loss 0.3375, val loss 0.3409
+step 1500: train loss 0.3340, val loss 0.3380
+step 2000: train loss 0.3313, val loss 0.3346
+step 2500: train loss 0.3305, val loss 0.3344
+step 3000: train loss 0.3303, val loss 0.3339
+step 3500: train loss 0.3292, val loss 0.3347
+step 4000: train loss 0.3289, val loss 0.3332
+step 4500: train loss 0.3268, val loss 0.3344
+step 4999: train loss 0.3271, val loss 0.3351
+
+2.
+batch_size = 64 # how many independent sequences will we process in parallel?
+block_size = 256 # what is the maximum context length for predictions?
+max_iters = 5000
+eval_interval = 500
+learning_rate = 3e-4
+device = "mps" if torch.backends.mps.is_available() else "cpu"
+eval_iters = 200
+n_embd = int(384 * 0.3)
+n_head = 6
+n_layer = 6
+dropout = 0.2
+
+0.99525 M parameters
+step 0: train loss 3.6693, val loss 3.6687
+step 500: train loss 0.3603, val loss 0.3633
+step 1000: train loss 0.3370, val loss 0.3394
+step 1500: train loss 0.3320, val loss 0.3361
+step 2000: train loss 0.3307, val loss 0.3354
+step 2500: train loss 0.3294, val loss 0.3335
+step 3000: train loss 0.3291, val loss 0.3340
+step 3500: train loss 0.3282, val loss 0.3347
+step 4000: train loss 0.3265, val loss 0.3346
+step 4500: train loss 0.3251, val loss 0.3351
+step 4999: train loss 0.3236, val loss 0.3369
+
+No nap No like it
+Mama I want play with big red ball outside Look moon
+I want more juice please What is that
+I love you I love you
+Bath time Read book
+I want more juice please Mama I want play with big red ball outside
+Read book Shoes on
+I climb I want more juice please
+I hide More more
+Shoes on I run fast
+No mine Mama I want play with big red ball outside
+Daddy read me dinosaur book before bed Bath time
+No stop I dance
+I jump Uh oh spill
+I see bird I want that
+Night night Night night
+I hide Hel
+
+3.
+batch_size = 64 # how many independent sequences will we process in parallel?
+block_size = 256 # what is the maximum context length for predictions?
+max_iters = 5000
+eval_interval = 500
+learning_rate = 3e-4
+device = "mps" if torch.backends.mps.is_available() else "cpu"
+eval_iters = 200
+n_embd = int(384 * 0.7)
+n_head = 6
+n_layer = 1
+dropout = 0.2
+
+0.950904 M parameters
+step 0: train loss 3.7091, val loss 3.7086
+step 500: train loss 0.3484, val loss 0.3540
+step 1000: train loss 0.3380, val loss 0.3455
+step 1500: train loss 0.3337, val loss 0.3426
+step 2000: train loss 0.3327, val loss 0.3418
+step 2500: train loss 0.3308, val loss 0.3426
+step 3000: train loss 0.3290, val loss 0.3424
+step 3500: train loss 0.3282, val loss 0.3446
+step 4000: train loss 0.3239, val loss 0.3457
+step 4500: train loss 0.3200, val loss 0.3477
+step 4999: train loss 0.3151, val loss 0.3506
+
+I see doggy I make mess
+Saw big fluffy doggy at park it run fast
+I hide Shoes on
+I found it I love you
+I want cookie Shoes on
+Night night I draw
+I dant that Bath time
+I climb I wash hands
+More bubbles No stop
+I wash hands Look airplane
+No mine Come here
+Where ball I love you
+I hungry Daddy play
+I wash hands Where kome before bed I see bird
+I see bird I see doggy
+Saw big fluffy doggy at park it run fast
+I sing Whe kitty go
+I sing No nap
+I jump high Come here
+Read book Daddy read me dinosaur book
+
+4.
+0.95428 M parameters
+step 0: train loss 3.6529, val loss 3.6513
+step 500: train loss 0.3556, val loss 0.3589
+step 1000: train loss 0.3361, val loss 0.3413
+step 1500: train loss 0.3333, val loss 0.3381
+step 2000: train loss 0.3300, val loss 0.3356
+step 2500: train loss 0.3284, val loss 0.3349
+step 3000: train loss 0.3266, val loss 0.3348
+step 3500: train loss 0.3257, val loss 0.3372
+step 4000: train loss 0.3248, val loss 0.3379
+step 4500: train loss 0.3214, val loss 0.3392
+step 4999: train loss 0.3179, val loss 0.3430
+
+Night night I jump high
+No mine Uh oh spill
+Where kitty go I want that
+I run fast Big truck
+Mjummy Shoes on
+No nap I dance
+I tired I hide
+Read book Go park
+I draw I hide
+What is that I hide
+Daddy read me dinosaur book before bed
+Come here No touch
+I jump No stop
+Help me please I climb
+No nap No like it
+I want that Where ball
+I run fast Saw big fluffy doggy at park it run fast
+I jump high I love you
+All done I dance
+I found it No mine
+No mine I tired
+Look moon My teddy
+Go park I tired
+All done I
+
+5. Model C with biases for QKV Projections
+0.956008 M parameters
+step 0: train loss 3.7599, val loss 3.7604
+step 500: train loss 0.3477, val loss 0.3516
+step 1000: train loss 0.3336, val loss 0.3393
+step 1500: train loss 0.3316, val loss 0.3368
+step 2000: train loss 0.3302, val loss 0.3363
+step 2500: train loss 0.3284, val loss 0.3344
+step 3000: train loss 0.3266, val loss 0.3354
+step 3500: train loss 0.3250, val loss 0.3370
+step 4000: train loss 0.3222, val loss 0.3383
+step 4500: train loss 0.3187, val loss 0.3420
+step 4999: train loss 0.3127, val loss 0.3455
+
+Read book Yummy apple
+Where ball More more
+Saw big fluffy doggy at park it run fast Look moon
+My teddy I want cookie
+Mama I want play with big red ball outside Big truck
+I run fast Night night
+Daddy play I climb
+I wash hands All done
+I hungry I want that
+I did it Go park
+I sing I make mess
+Shoes on I I love you
+Yummy apple Big hug
+I draw Saw big fluffy doggy at park it run fast
+I hide More bubbles
+I run fast I found it
+Look airplane I climb
+No stop I want cookie
+I did it More more
+I want cookie
+
+6. Model C without Skip Connections:
+0.95428 M parameters
+step 0: train loss 3.6204, val loss 3.6185
+step 500: train loss 3.1268, val loss 3.1297
+step 1000: train loss 3.1275, val loss 3.1311
+step 1500: train loss 2.8767, val loss 2.8796
+step 2000: train loss 2.8767, val loss 2.8795
+step 2500: train loss 3.1278, val loss 3.1295
+step 3000: train loss 3.1270, val loss 3.1297
+step 3500: train loss 3.1258, val loss 3.1289
+step 4000: train loss 3.1265, val loss 3.1287
+step 4500: train loss 3.1273, val loss 3.1297
+step 4999: train loss 3.1267, val loss 3.1294
+
+otl ata Ud nIhj  ada o rt t medbpa l eopsplhe
+ atfhds cs
+  leIru ar kremtnk  GuGhdtu  oIB  Iyefyksrst aoa l g so toIeb ae bd eBter atlhyglmktd m rgu  ud ue fulmput si wm bMefm hpjuhdi p
+tetb uibwkAyaImsNma r ae dps
+ M  l nd cjltdi
+eytIamhdaamAnpd eidpr
+eitn tsuIrf e it  iibe kosanmu rlewdblere Lhmo keer tlysMNglsgnn MdyI ttkf  e
+ggednr elkabopt
+ret hgme r
+ ektth IWgS  e
+yeadhuorIf dBte  N  ubhgumeharrrophw
+I reeio
+m bhdb ep
+NnnSl d krne  s ea gWosrm wemimoIYkii
+oa
+ e hNa t ligtwaIeambu  d IooMei
+
+7. child speech test set
+mean_loss=0.35137617588043213
+
+8. shakespear test set
+mean_loss=7.705320835113525
+
+10. Model A with biases
+0.997302 M parameters
+step 0: train loss 3.7513, val loss 3.7494
+step 500: train loss 0.3599, val loss 0.3626
+step 1000: train loss 0.3374, val loss 0.3403
+step 1500: train loss 0.3332, val loss 0.3370
+step 2000: train loss 0.3313, val loss 0.3349
+step 2500: train loss 0.3299, val loss 0.3340
+step 3000: train loss 0.3299, val loss 0.3338
+step 3500: train loss 0.3289, val loss 0.3345
+step 4000: train loss 0.3278, val loss 0.3342
+step 4500: train loss 0.3273, val loss 0.3348
+step 4999: train loss 0.3246, val loss 0.3348
+
+No nap No stop
+Mama I want play with big red ball outside What is that
+I want more juice please Where ball
+I jump I did it
+Uh oh spill No touch
+I see bird I wash hands
+Mama I want play with big red ball outside I hungry
+Bath time I see bird
+I draw Come here
+No like it Look moon
+I love you I want cookie
+My teddy No mine
+Daddy read me dinosaur book before bed I want cookie
+I climb Yummy apple
+Yummy apple I love you
+What is that Go park
+No nap Where kitty go
+Where ball No stop
+I draw Daddy play
+Hel
+
+10. Model A without skip connections
+
+
+11. model a evaluation on Test set
+mean_loss=0.34088265895843506 std_loss=0.0050879186019301414
+
+12. model evaluation on shakespeare set
+test set: mean_loss=7.936275005340576 std_loss=0.0502009317278862
+baseline: mean_loss=9.765157699584961 std_loss=0.0306889358907938
+
