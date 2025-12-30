@@ -55,7 +55,7 @@ for model in svc_models:
     plt.ylim(-1.1, 1.1)
     plt.xlabel('X1')
     plt.ylabel('X2')
-    plt.title(f'C: {model.C}, Boundary: {round(theta_2, 2)}x_2 + {round(theta_1, 2)}x_1 + {round(theta_0, 2)} = 0')
+    plt.title(f'C: {model.embedding_table}, Boundary: {round(theta_2, 2)}x_2 + {round(theta_1, 2)}x_1 + {round(theta_0, 2)} = 0')
     plt.legend(loc='upper right', bbox_to_anchor=(1.4, 1))
     plt.show()
     print(classification_report(y_test, pred))
