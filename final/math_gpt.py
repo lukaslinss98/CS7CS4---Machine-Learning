@@ -21,7 +21,7 @@ torch.manual_seed(1337)
 print(device)
 
 
-with open('training.txt', 'r', encoding='utf-8') as f:
+with open('datasets/mixed_operations_padded/training_mixed_double_single_padded.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocabulary = ['\n', '*', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=']

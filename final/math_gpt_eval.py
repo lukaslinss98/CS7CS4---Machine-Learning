@@ -12,7 +12,7 @@ model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
 
-with open('test.txt', 'r', encoding='utf-8') as f:
+with open('datasets/mixed_operations_padded/test_mixed_double_single_padded.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocab = torch.load('math_vocab.pt')
