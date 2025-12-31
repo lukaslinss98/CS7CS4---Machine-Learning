@@ -33,12 +33,12 @@ def generate_dataset(numbers: List[int], op: Operation, test_split: float, exten
             elif op == Operation.DIV:
                 result = int(i / j)
 
-            expression = f'{i:03}{op.value}{j:03}={result:03}'
+            expression = f'{i:04}{op.value}{j:04}={result:04}'
             expressions.append(expression)
 
     random.shuffle(expressions)
     split_index = int(len(expressions) * test_split)
-    return expressions[:split_index] * extension_factor, expressions[split_index:] * extension_factor
+    return expressions[:split_index] * extension_factor, expressions[split_index:]
 
 
 train_addition_single, test_addition_single = generate_dataset(
@@ -66,7 +66,7 @@ train_sub_double, test_sub_double = generate_dataset(
     np.linspace(0, 49, 50).tolist(),
     Operation.SUB,
     0.9,
-    extension_factor=8
+    extension_factor=4
 )
 
 train_mult_single, test_mult_single = generate_dataset(
@@ -97,6 +97,7 @@ with open('training.txt', 'w') as f:
         *train_div_single,
         *train_addition_double,
         *train_sub_double,
+        *train_mult_double
     ]
     random.shuffle(training)
     data = '\n'.join(training)
@@ -109,7 +110,8 @@ with open('test.txt', 'w') as f:
         *test_mult_single,
         *test_div_single,
         *test_addition_double,
-        *test_sub_double
+        *test_sub_double,
+        *test_mult_double
     ]
     random.shuffle(test)
     data = '\n'.join(test)

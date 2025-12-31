@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 # hyperparameters
 batch_size = 64
-block_size = 64
+block_size = 128
 max_iters = 5000
 eval_interval = 500
 learning_rate = 3e-4
