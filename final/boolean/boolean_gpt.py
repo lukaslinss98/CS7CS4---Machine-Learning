@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
-from final.boolean.util.model_config import medium_model as config
+from final.boolean.util.model_config import large_model as config
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -27,20 +27,20 @@ print(device)
 with open('data/depth2_all_operators_unsymmetric/train_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
-vocab = ['\n', '=', 'TRUE', 'FALSE', 'AND', 'OR', 'XOR', 'NOT', '(', ')', ' ']
-vocab_size = len(vocab)
-torch.save(vocab, 'boolean_vocab.pt')
-print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {vocab}')
+vocabulary = ['\n', '=', 'TRUE', 'FALSE', 'AND', 'OR', 'XOR', 'NOT', '(', ')', ' ']
+vocab_size = len(vocabulary)
+torch.save(vocabulary, 'boolean_vocab.pt')
+print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {vocabulary}')
 
-encode, decode = create_encoder_decoder(vocab=vocab)
+encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 # Train and test splits
 tokenized_text = word_tokenizer(text)
 
 data = torch.tensor(encode(tokenized_text), dtype=torch.long)
-n = int(0.9 * len(data))
-train_data = data[:n]
-val_data = data[n:]
+split_index = int(0.9 * len(data))
+train_data = data[:split_index]
+val_data = data[split_index:]
 
 
 # data loading
@@ -48,8 +48,8 @@ def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     data = train_data if split == 'train' else val_data
     ix = torch.randint(len(data) - block_size, (batch_size,))
-    x = torch.stack([data[i:i + block_size] for i in ix])
-    y = torch.stack([data[i + 1:i + block_size + 1] for i in ix])
+    x = torch.stack([data[i : i + block_size] for i in ix])
+    y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix])
     x, y = x.to(device), y.to(device)
     return x, y
 
@@ -61,7 +61,7 @@ class Head(nn.Module):
         super().__init__()
         self.key = nn.Linear(n_embd, head_size, bias=False)
         self.query = nn.Linear(n_embd, head_size, bias=False)
-        self.value = nn.Linear(n_embd, head_size, bias=False)
+        self.value = nn.Linear(n_embd, kead_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
 
         self.dropout = nn.Dropout(dropout)
@@ -171,31 +171,18 @@ class BooleanGPT(nn.Module):
             B, T, C = logits.shape
             logits = logits.view(B * T, C)
             targets = targets.view(B * T)
-            # loss = F.cross_entropy(logits, targets)
+            loss = F.cross_entropy(logits, targets)
 
-            equals_token_id = encode('=')[0]
-            mask = torch.zeros(logits.shape[0], dtype=torch.bool, device=device)
-
-            for i in range(B):
-                equals_positions = (input_batch[i] == equals_token_id).nonzero(as_tuple=False)
-                if len(equals_positions) > 0:
-                    start_idx = equals_positions[0].item() + 1
-                    mask[i * T + start_idx:i * T + T] = True
-
-            if mask.sum() > 0:
-                loss = F.cross_entropy(logits[mask], targets[mask])
-            else:
-                loss = F.cross_entropy(logits, targets)
 
         return logits, loss
 
-    def generate(self, idx, max_new_tokens):
+    def generate(self, input_batch, max_new_tokens):
         # idx is (B, T) array of indices in the current context
         for _ in range(max_new_tokens):
             # crop idx to the last block_size tokens
-            idx_cond = idx[:, -block_size:]
+            input_batch_cropped = input_batch[:, -block_size:]
             # get the predictions
-            logits, _ = self(idx_cond)
+            logits, _ = self(input_batch_cropped)
             # focus only on the last time step
             logits = logits[:, -1, :]  # becomes (B, C)
             # apply softmax to get probabilities
@@ -203,8 +190,8 @@ class BooleanGPT(nn.Module):
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
             # append sampled index to the running sequence
-            idx = torch.cat((idx, idx_next), dim=1)  # (B, T+1)
-        return idx
+            input_batch = torch.cat((input_batch, idx_next), dim=1)  # (B, T+1)
+        return input_batch
 
 
 def main():
@@ -237,12 +224,46 @@ def main():
                 losses = estimate_loss()
                 print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
-            # sample a batch of data
-            xb, yb = get_batch('train')
+            x_batch, y_batch = get_batch('train')
+            B, T = x_batch.shape
 
-            # evaluate the loss
-            _, loss = model(xb, yb)
+            logits, _ = model(x_batch, y_batch)
             optimizer.zero_grad(set_to_none=True)
+
+            equals_id = encode(['='])[0]
+            true_id = encode(['TRUE'])[0]
+            false_id = encode(['FALSE'])[0]
+
+            prev_is_eq = torch.zeros_like(y_batch, dtype=torch.bool)
+            prev_is_eq[:, 1:] = (x_batch[:, :-1] == equals_id)
+
+            is_truth_token = (y_batch == true_id) | (y_batch == false_id)
+
+            answer_pos = prev_is_eq & is_truth_token
+
+            # # ---- DEBUG PRINT EVERY 200 ITERS ----
+            # if iter % 200 == 0:
+            #     b = 0  # look at first example in batch
+            #     print("---- DEBUG SAMPLE ----")
+            #     print("x:", " ".join(decode([int(t)]) for t in x_batch[b]))
+            #     print("y:", " ".join(decode([int(t)]) for t in y_batch[b]))
+            #     print("answer flags:", answer_pos[b].tolist())
+            #     for t in range(T):
+            #         if answer_pos[b, t]:
+            #             prev_tok = decode([int(x_batch[b, t - 1])]) if t > 0 else "<NONE>"
+            #             cur_tok = decode([int(y_batch[b, t])])
+            #             print(f"ANSWER POS t={t}: prev='{prev_tok}' cur='{cur_tok}'")
+
+            logits_flat = logits.view(B * T, -1)
+            targets_flat = y_batch.view(B * T)
+
+            weights = torch.ones_like(y_batch, dtype=torch.float32)
+            weights[answer_pos] = 5.0  # or 3–10
+
+            weights_flat = weights.view(B * T)
+            per_token_ce = F.cross_entropy(logits_flat, targets_flat, reduction='none')
+            loss = (per_token_ce * weights_flat).sum() / weights_flat.sum()
+
             loss.backward()
             optimizer.step()
         except KeyboardInterrupt:

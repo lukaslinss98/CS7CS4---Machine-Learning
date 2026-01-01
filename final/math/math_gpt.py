@@ -31,7 +31,7 @@ torch.save(tokens, 'math_vocab.pt')
 vocab_size = len(tokens)
 print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {tokens}')
 
-encode, decode = create_encoder_decoder(vocab=tokens)
+encode, decode = create_encoder_decoder(vocabulary=tokens)
 
 # Train and test splits
 data = torch.tensor(encode(text), dtype=torch.long)

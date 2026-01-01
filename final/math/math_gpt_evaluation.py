@@ -16,7 +16,7 @@ with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operation
 
 vocab = torch.load('math_vocab.pt')
 
-encode, decode = create_encoder_decoder(vocab=vocab)
+encode, decode = create_encoder_decoder(vocabulary=vocab)
 
 
 def get_operation(expression: str) -> str:
