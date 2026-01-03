@@ -22,6 +22,7 @@ encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 number_sucess = 0
 
+
 def get_depth(expression: str) -> int:
     stack = []
     max_depth = 0
@@ -36,13 +37,12 @@ def get_depth(expression: str) -> int:
 
 
 success_by_depth = {}
-number_by_depth= {}
+number_by_depth = {}
 for line in text.split('\n')[:-1]:
     expression, expected_answer = line.split('=')
     expression = expression.strip()
     depth = get_depth(expression)
-    number_by_depth[depth] =  number_by_depth.get(depth, 0) + 1
-
+    number_by_depth[depth] = number_by_depth.get(depth, 0) + 1
 
     tokenized_expression = word_tokenizer(expression)
     tokenized_expression.append(' ')
@@ -50,8 +50,6 @@ for line in text.split('\n')[:-1]:
 
     prompt = torch.tensor([encode(tokenized_expression)], dtype=torch.long, device=device)
     output = decode(model.generate(prompt, max_new_tokens=2)[0].tolist())
-    output = output.split(' ')[-1]
-
     isSucess = expected_answer.strip() == output.strip()
 
     if isSucess:

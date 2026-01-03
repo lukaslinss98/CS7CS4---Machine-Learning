@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import matplotlib.pyplot as plt
 
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
-from final.boolean.util.model_config import large_model as config
+from final.boolean.util.model_config import small_model as config
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -48,8 +49,8 @@ def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     data = train_data if split == 'train' else val_data
     ix = torch.randint(len(data) - block_size, (batch_size,))
-    x = torch.stack([data[i : i + block_size] for i in ix])
-    y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix])
+    x = torch.stack([data[i: i + block_size] for i in ix])
+    y = torch.stack([data[i + 1: i + block_size + 1] for i in ix])
     x, y = x.to(device), y.to(device)
     return x, y
 
@@ -173,11 +174,11 @@ class BooleanGPT(nn.Module):
             targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
 
-
         return logits, loss
 
     def generate(self, input_batch, max_new_tokens):
         # idx is (B, T) array of indices in the current context
+        generated = []
         for _ in range(max_new_tokens):
             # crop idx to the last block_size tokens
             input_batch_cropped = input_batch[:, -block_size:]
@@ -189,9 +190,10 @@ class BooleanGPT(nn.Module):
             probs = F.softmax(logits, dim=-1)  # (B, C)
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
+            generated.append(idx_next)
             # append sampled index to the running sequence
             input_batch = torch.cat((input_batch, idx_next), dim=1)  # (B, T+1)
-        return input_batch
+        return torch.cat(generated, dim=1)
 
 
 def main():
@@ -202,7 +204,7 @@ def main():
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-1)
 
-    def weighted_cross_entropy_loss(x_batch,y_batch, logits):
+    def weighted_cross_entropy_loss(x_batch, y_batch, logits):
         batch_dim, context_dim = x_batch.shape
 
         previous_is_equals = torch.zeros_like(y_batch, dtype=torch.bool)
@@ -238,6 +240,7 @@ def main():
         model.train()
         return losses_by_split
 
+    training_losses = []
     for iter in range(max_iters):
         try:
             if iter % eval_interval == 0 or iter == max_iters - 1:
@@ -245,30 +248,12 @@ def main():
                 print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
             x_batch, y_batch = get_batch('train')
-            batch_dim, context_dim = x_batch.shape
 
             logits, _ = model(x_batch, y_batch)
             optimizer.zero_grad(set_to_none=True)
 
-            loss = weighted_cross_entropy_loss(x_batch,y_batch, logits)
-
-            # previous_is_equals = torch.zeros_like(y_batch, dtype=torch.bool)
-            # previous_is_equals[:, 1:] = (x_batch[:, :-1] == encode(['='])[0])
-            #
-            # is_boolean_token = (y_batch == encode(['TRUE'])[0]) | (y_batch == encode(['FALSE'])[0])
-            #
-            # logits_flat = logits.view(batch_dim * context_dim, -1)
-            # targets_flat = y_batch.view(batch_dim * context_dim)
-            #
-            # weights = torch.ones_like(y_batch, dtype=torch.float32)
-            #
-            # answer_positions = previous_is_equals & is_boolean_token
-            # weights[answer_positions] = 5.0
-            #
-            # weights_flat = weights.view(batch_dim * context_dim)
-            # per_token_cross_entropy = F.cross_entropy(logits_flat, targets_flat, reduction='none')
-            # loss = (per_token_cross_entropy * weights_flat).sum() / weights_flat.sum()
-
+            loss = weighted_cross_entropy_loss(x_batch, y_batch, logits)
+            training_losses.append(loss.item())
             loss.backward()
             optimizer.step()
         except KeyboardInterrupt:
@@ -278,9 +263,16 @@ def main():
     print('saving model weights')
     torch.save(model.state_dict(), 'model_weights_part2.pth')
 
-    # output = m.generate(prompt, max_new_tokens=6)[0].tolist()
-    # print(decode(output))
-
+    plt.figure(figsize=(6, 4))
+    plt.plot(range(len(training_losses)), training_losses, label="Training CE loss")
+    plt.xlabel("Step")
+    plt.ylabel("Masked Cross-entropy loss")
+    plt.title("Training loss BooleanGPT")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig('./plots/boolean_gpt_ce_loss.png', dpi=200)
+    plt.show()
 
 if __name__ == '__main__':
     main()

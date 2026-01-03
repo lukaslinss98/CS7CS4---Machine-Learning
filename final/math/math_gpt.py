@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+from matplotlib import pyplot as plt
 from torch.nn import functional as F
 
 from final.decoder_encoder import create_encoder_decoder
 from final.math.datasets.curriculum.curriculum import curriculum
-from final.math.util.model_config import large_model as config
+from final.math.util.model_config import medium_model as config
 from final.math.util.tokenizer import NumberTokenizer
 
 # hyperparameters
@@ -25,14 +26,6 @@ dropout = 0.2
 torch.manual_seed(1337)
 print(device)
 
-# with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/training_mixed_double_single.txt',
-#           'r', encoding='utf-8') as f:
-#     text = f.read()
-#
-# tokenized = NumberTokenizer().tokenize(text, padding=True)
-
-
-# Train and test splits
 curriculum_part1, curriculum_part2, curriculum_part3 = curriculum
 full_curriculum = '\n'.join(curriculum)
 
@@ -246,6 +239,7 @@ def main():
         model.train()
         return losses_by_split
 
+    training_losses = []
     for iteration in range(max_iters):
         try:
             if iteration % eval_interval == 0 or iteration == max_iters - 1:
@@ -255,6 +249,7 @@ def main():
             x_batch, y_batch = get_batch('train', epoch=iteration)
 
             logits, loss = model(x_batch, y_batch)
+            training_losses.append(loss.item())
 
             optimizer.zero_grad(set_to_none=True)
 
@@ -268,8 +263,16 @@ def main():
     print('saving model weights')
     torch.save(model.state_dict(), './model_weights_part1.pth')
 
-    # output = m.generate(prompt, max_new_tokens=6)[0].tolist()
-    # print(decode(output))
+    plt.figure(figsize=(6, 4))
+    plt.plot(range(len(training_losses)), training_losses, label="Training CE loss")
+    plt.xlabel("Step")
+    plt.ylabel("Cross-entropy loss")
+    plt.title("Training loss MathGPT")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig('./plots/math_gpt_ce_loss.png', dpi=200)
+    plt.show()
 
 
 if __name__ == '__main__':
