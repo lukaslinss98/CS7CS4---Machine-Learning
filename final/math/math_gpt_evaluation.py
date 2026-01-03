@@ -1,6 +1,7 @@
 import re
 
 import torch
+from pycparser.ply.ctokens import t_XOR
 
 from final.decoder_encoder import create_encoder_decoder
 from final.math.util.tokenizer import NumberTokenizer
@@ -40,7 +41,6 @@ for line in text.split('\n')[:-1]:
     prompt = torch.tensor([encode(tokenized)], dtype=torch.long, device=device)
     output = decode(model.generate(prompt, max_new_tokens=6)[0].tolist())
     output = tokenizer.token_to_string(output)
-    # output = output[len(expression) + 1:]
 
     result = []
     operants = ['+', '-']
@@ -62,12 +62,11 @@ for line in text.split('\n')[:-1]:
         number_sucess += 1
         success_by_operation[operation] = success_by_operation.get(operation, 0) + 1
 
-    print(f'{expression=}, {expected=}, {result=} | {isSucess=}')
-    print()
+    print(f'{expression=}, {expected=}, {result=} | {isSucess=}\n')
 
 for op, nu in number_by_operation.items():
     print(
-        f'operation={op} success: {success_by_operation[op]}, total: {nu}, success rate: {success_by_operation[op] / nu}')
+        f'operation= {op}, success: {success_by_operation[op]}, total: {nu}, success rate: {success_by_operation[op] / nu}')
 
-success_rate = number_sucess / len(text.split('\n')[:-1])
-print(f"Success Rate: {success_rate}")
+total = len(text.split('\n')[:-1])
+print(f"Total Success Rate: {number_sucess / total}")

@@ -34,7 +34,7 @@ print(device)
 
 # Train and test splits
 curriculum_part1, curriculum_part2, curriculum_part3 = curriculum
-full_curriculum = ''.join(curriculum)
+full_curriculum = '\n'.join(curriculum)
 
 tokenizer = NumberTokenizer()
 tokenized_curriculum = tokenizer.tokenize(full_curriculum, padding=True)

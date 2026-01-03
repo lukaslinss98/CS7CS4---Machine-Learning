@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
-from final.boolean.util.model_config import medium_model as config
+from final.boolean.util.model_config import large_model as config
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -24,7 +24,7 @@ dropout = 0.2
 torch.manual_seed(1337)
 print(device)
 
-with open('data/depth3_all_operators_unsymmetric/train_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
+with open('./data/split_datasets/train_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocabulary = ['\n', '=', 'TRUE', 'FALSE', 'AND', 'OR', 'XOR', 'NOT', '(', ')', ' ']

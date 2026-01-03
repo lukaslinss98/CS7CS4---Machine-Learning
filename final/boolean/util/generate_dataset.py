@@ -51,7 +51,6 @@ def generate_boolean_expression(depth=1, percentage_unary=0.2, symmetrical=True,
 
 def evaluate_expression(expression: List[str]):
     mapped = [mapping[part] for part in expression]
-    print(mapped)
     return eval(' '.join(mapped))
 
 
@@ -59,7 +58,6 @@ def generate_boolean_expressions(number_of_expressions, max_depth=1, symmetrical
     expressions = []
     for _ in range(number_of_expressions):
         expression = generate_boolean_expression(depth=max_depth, symmetrical=symmetrical, percentage_unary=percentage_unary)[1:-1]
-        print(expression)
         result = evaluate_expression(expression)
         result = str(result).upper()
         expression.append('=')

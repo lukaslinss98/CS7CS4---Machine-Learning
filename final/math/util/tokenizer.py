@@ -5,7 +5,7 @@ from typing import List
 class NumberTokenizer:
 
     def __init__(self):
-        self.units = ['U', 'T', 'H', 'K']
+        self.units = ['U', 'T', 'H']
 
     def tokenize(self, data: str, padding=False) -> List[str]:
 
@@ -14,7 +14,7 @@ class NumberTokenizer:
                 return []
 
             if padding:
-                buffer = ''.join(buffer).zfill(4)
+                buffer = ''.join(buffer).zfill(3)
 
             tmp = []
             for index, num in enumerate(reversed(buffer)):
@@ -64,11 +64,8 @@ class NumberTokenizer:
             ch = data[i]
 
             if ch in self.units:
-                k = h = t = u = '0'
+                h = t = u = '0'
 
-                if i < data_length and data[i] == 'K':
-                    k = read_digit_at(i)
-                    i += 2  # skip 'K' and digit
                 if i < data_length and data[i] == 'H':
                     h = read_digit_at(i)
                     i += 2
@@ -79,7 +76,7 @@ class NumberTokenizer:
                     u = read_digit_at(i)
                     i += 2
 
-                result.append(''.join([k, h, t, u]).lstrip('0') or '0')
+                result.append(''.join([h, t, u]).lstrip('0') or '0')
                 continue
 
             else:
@@ -87,6 +84,7 @@ class NumberTokenizer:
                 i += 1
 
         return ''.join(result)
+
 
 class TestTokenizer(unittest.TestCase):
 
@@ -108,7 +106,7 @@ class TestTokenizer(unittest.TestCase):
     def test_padding(self):
         given = '20+35=45'
         actual = NumberTokenizer().tokenize(given, padding=True)
-        self.assertEqual(['K0', 'H0', 'T2', 'U0', '+', 'K0', 'H0', 'T3', 'U5', '=', 'K0', 'H0', 'T4', 'U5'], actual)
+        self.assertEqual(['H0', 'T2', 'U0', '+', 'H0', 'T3', 'U5', '=', 'H0', 'T4', 'U5'], actual)
 
     def test_token_to_string(self):
         given = 'T2U1+U2=T2U3'
@@ -116,11 +114,11 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual('21+2=23', actual)
 
     def test_padded_token_to_string(self):
-        given = 'K1H0T1U0+K0H0T2U2=K1H0T3U2\n'
+        given = 'H0T1U0+H0T2U2=H0T3U2\n'
         actual = NumberTokenizer().token_to_string(given)
-        self.assertEqual('1010+22=1032\n', actual)
+        self.assertEqual('10+22=32\n', actual)
 
     def test_padded_token_with_only_zeros_to_string(self):
-        given = 'K0H0T0U0+K0H0T0U0=K0H0T0U0\n'
+        given = 'H0T0U0+H0T0U0=H0T0U0\n'
         actual = NumberTokenizer().token_to_string(given)
         self.assertEqual('0+0=0\n', actual)

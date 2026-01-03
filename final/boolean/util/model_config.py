@@ -9,9 +9,9 @@ xl_model = {
 large_model = {
     "batch_size": 64,
     "block_size": 128,
-    "n_embd": 128,
+    "n_embd": 186,
     "n_head": 6,
-    "n_layer": 6,
+    "n_layer": 7,
 }
 
 medium_model = {

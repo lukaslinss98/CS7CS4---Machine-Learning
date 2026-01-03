@@ -13,7 +13,7 @@ state_dictionary = torch.load('model_weights_part2.pth', map_location=device)
 model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
-with open('data/depth3_all_operators_unsymmetric/test_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
+with open('./data/split_datasets/test_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocabulary = torch.load('boolean_vocab.pt')
@@ -22,20 +22,27 @@ encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 number_sucess = 0
 
-def get_operator(expression: str) -> List[str]:
-    pattern = r'\b(?:AND|OR|XOR|NOT)\b'
-    return re.findall(pattern, expression)
+def get_depth(expression: str) -> int:
+    stack = []
+    max_depth = 0
+    for c in expression:
+        if c == '(':
+            stack.append(c)
+            max_depth = max(max_depth, len(stack))
+        elif c == ')':
+            stack.pop()
+
+    return max_depth + 1
 
 
-success_by_operator = {}
-number_by_operator = {}
+success_by_depth = {}
+number_by_depth= {}
 for line in text.split('\n')[:-1]:
     expression, expected_answer = line.split('=')
     expression = expression.strip()
+    depth = get_depth(expression)
+    number_by_depth[depth] =  number_by_depth.get(depth, 0) + 1
 
-    operators = get_operator(expression)
-    for op in operators:
-        number_by_operator[op] = number_by_operator.get(op, 0) + 1
 
     tokenized_expression = word_tokenizer(expression)
     tokenized_expression.append(' ')
@@ -49,15 +56,14 @@ for line in text.split('\n')[:-1]:
 
     if isSucess:
         number_sucess += 1
-        for op in operators:
-            success_by_operator[op] = success_by_operator.get(op, 0) + 1
+        success_by_depth[depth] = success_by_depth.get(depth, 0) + 1
 
     print(f'{expression=}, expected: {expected_answer.strip()}, actual: {output.strip()} | {isSucess}')
 
 print('|-----------------------------result--------------------------------|')
-for op, nu in number_by_operator.items():
+for depth, nu in number_by_depth.items():
     print(
-        f'operation={op} success: {success_by_operator[op]}, total: {nu}, success rate: {success_by_operator[op] / nu}')
+        f'{depth=} success: {success_by_depth[depth]}, total: {nu}, success rate: {success_by_depth[depth] / nu}')
 
 success_rate = number_sucess / len(text.split('\n')[:-1])
 print(f"Success Rate: {success_rate}")
