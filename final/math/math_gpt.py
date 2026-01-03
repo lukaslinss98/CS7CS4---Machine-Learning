@@ -3,7 +3,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 from final.decoder_encoder import create_encoder_decoder
-from final.math.util.model_config import xl_model as config
+from final.math.datasets.curriculum.curriculum import curriculum
+from final.math.util.model_config import large_model as config
 from final.math.util.tokenizer import NumberTokenizer
 
 # hyperparameters
@@ -14,7 +15,7 @@ n_head = config['n_head']
 n_layer = config['n_layer']
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
-max_iters = 5000
+max_iters = 9000
 eval_interval = 500
 learning_rate = 3e-4
 eval_iters = 200
@@ -24,28 +25,54 @@ dropout = 0.2
 torch.manual_seed(1337)
 print(device)
 
-with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/training_mixed_double_single.txt',
-          'r', encoding='utf-8') as f:
-    text = f.read()
+# with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/training_mixed_double_single.txt',
+#           'r', encoding='utf-8') as f:
+#     text = f.read()
+#
+# tokenized = NumberTokenizer().tokenize(text, padding=True)
 
-tokenized = NumberTokenizer().tokenize(text, padding=True)
-vocabulary = sorted(list(set(tokenized)))
-torch.save(vocabulary, 'math_vocab.pt')
-vocab_size = len(vocabulary)
-print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {vocabulary}')
-
-encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 # Train and test splits
-data = torch.tensor(encode(tokenized), dtype=torch.long)
-split_index = int(0.9 * len(data))
-train_data = data[:split_index]
-val_data = data[split_index:]
+curriculum_part1, curriculum_part2, curriculum_part3 = curriculum
+full_curriculum = ''.join(curriculum)
+
+tokenizer = NumberTokenizer()
+tokenized_curriculum = tokenizer.tokenize(full_curriculum, padding=True)
+vocabulary = sorted(list(set(tokenized_curriculum)))
+torch.save(vocabulary, 'math_vocab.pt')
+vocab_size = len(vocabulary)
+encode, decode = create_encoder_decoder(vocabulary=vocabulary)
+
+print(f'Vocabulary Size: {vocab_size}\nVocabulary: {vocabulary}')
+
+data_c1 = torch.tensor(encode(tokenizer.tokenize(curriculum_part1, padding=True)), dtype=torch.long)
+split_index = int(0.9 * len(data_c1))
+train_data_c1 = data_c1[:split_index]
+val_data_c1 = data_c1[split_index:]
+
+data_c2 = torch.tensor(encode(tokenizer.tokenize(curriculum_part2, padding=True)), dtype=torch.long)
+split_index = int(0.9 * len(data_c2))
+train_data_c2 = data_c2[:split_index]
+val_data_c2 = data_c2[split_index:]
+
+data_c3 = torch.tensor(encode(tokenizer.tokenize(curriculum_part3, padding=True)), dtype=torch.long)
+split_index = int(0.9 * len(data_c3))
+train_data_c3 = data_c3[:split_index]
+val_data_c3 = data_c3[split_index:]
 
 
-# data loading
-def get_batch(split):
+def load_curriculum_data(epoch):
+    if epoch < max_iters * 0.33:
+        return train_data_c1, val_data_c1
+    elif epoch < max_iters * 0.66:
+        return train_data_c2, val_data_c2
+    else:
+        return train_data_c3, val_data_c3
+
+
+def get_batch(split, epoch):
     # generate a small batch of data of inputs x and targets y
+    train_data, val_data = load_curriculum_data(epoch)
     data = train_data if split == 'train' else val_data
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i:i + block_size] for i in ix])
@@ -206,13 +233,13 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-1)
 
     @torch.no_grad()
-    def estimate_loss():
+    def estimate_loss(epoch):
         losses_by_split = {}
         model.eval()
         for split in ['train', 'val']:
             losses = torch.zeros(eval_iters)
             for iteration in range(eval_iters):
-                X, Y = get_batch(split)
+                X, Y = get_batch(split, epoch=epoch)
                 _, loss = model(X, Y)
                 losses[iteration] = loss.item()
             losses_by_split[split] = losses.mean()
@@ -222,10 +249,10 @@ def main():
     for iteration in range(max_iters):
         try:
             if iteration % eval_interval == 0 or iteration == max_iters - 1:
-                losses = estimate_loss()
+                losses = estimate_loss(epoch=iteration)
                 print(f"step {iteration}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
-            x_batch, y_batch = get_batch('train')
+            x_batch, y_batch = get_batch('train', epoch=iteration)
 
             logits, loss = model(x_batch, y_batch)
 

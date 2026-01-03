@@ -13,11 +13,10 @@ state_dictionary = torch.load('model_weights_part1.pth', map_location=device)
 model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
-with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/test_mixed_double_single.txt', 'r', encoding='utf-8') as f:
+with open('/Users/lukas/dev/machine_learning/final/math/datasets/curriculum/test_curriculum_mixed.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocab = torch.load('math_vocab.pt')
-
 encode, decode = create_encoder_decoder(vocabulary=vocab)
 
 

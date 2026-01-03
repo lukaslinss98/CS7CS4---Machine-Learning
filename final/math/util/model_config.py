@@ -9,7 +9,7 @@ xl_model = {
 large_model = {
     "batch_size": 64,
     "block_size": 128,
-    "n_embd": 112,
+    "n_embd": 120,
     "n_head": 6,
     "n_layer": 6,
 }
