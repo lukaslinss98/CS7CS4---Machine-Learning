@@ -4,6 +4,7 @@ from torch.nn import functional as F
 
 from final.decoder_encoder import create_encoder_decoder
 from final.math.util.model_config import xl_model as config
+from final.math.util.tokenizer import NumberTokenizer
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -23,21 +24,23 @@ dropout = 0.2
 torch.manual_seed(1337)
 print(device)
 
-with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/training_mixed_double_single.txt', 'r', encoding='utf-8') as f:
+with open('/Users/lukas/dev/machine_learning/final/math/datasets/mixed_operations/training_mixed_double_single.txt',
+          'r', encoding='utf-8') as f:
     text = f.read()
 
-tokens = ['\n', '*', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=']
-torch.save(tokens, 'math_vocab.pt')
-vocab_size = len(tokens)
-print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {tokens}')
+tokenized = NumberTokenizer().tokenize(text, padding=True)
+vocabulary = sorted(list(set(tokenized)))
+torch.save(vocabulary, 'math_vocab.pt')
+vocab_size = len(vocabulary)
+print(f'Vocabulary Size: {vocab_size}\nText length: {len(text)}\nVocabulary: {vocabulary}')
 
-encode, decode = create_encoder_decoder(vocabulary=tokens)
+encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 # Train and test splits
-data = torch.tensor(encode(text), dtype=torch.long)
-n = int(0.9 * len(data))
-train_data = data[:n]
-val_data = data[n:]
+data = torch.tensor(encode(tokenized), dtype=torch.long)
+split_index = int(0.9 * len(data))
+train_data = data[:split_index]
+val_data = data[split_index:]
 
 
 # data loading
@@ -67,16 +70,16 @@ class Head(nn.Module):
         # input of size (batch, time-step, channels)
         # output of size (batch, time-step, head size)
         _, T, _ = x.shape
-        k = self.key(x)  # (B,T,hs)
-        q = self.query(x)  # (B,T,hs)
+        keys = self.key(x)  # (B,T,hs)
+        queries = self.query(x)  # (B,T,hs)
         # compute attention scores ("affinities")
-        wei = q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5  # (B, T, hs) @ (B, hs, T) -> (B, T, T)
+        wei = queries @ keys.transpose(-2, -1) * keys.shape[-1] ** -0.5  # (B, T, hs) @ (B, hs, T) -> (B, T, T)
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))  # (B, T, T)
         wei = F.softmax(wei, dim=-1)  # (B, T, T)
         wei = self.dropout(wei)
         # perform the weighted aggregation of the values
-        v = self.value(x)  # (B,T,hs)
-        out = wei @ v  # (B, T, T) @ (B, T, hs) -> (B, T, hs)
+        values = self.value(x)  # (B,T,hs)
+        out = wei @ values  # (B, T, T) @ (B, T, hs) -> (B, T, hs)
         return out
 
 
@@ -118,14 +121,14 @@ class Block(nn.Module):
         # n_embd: embedding dimension, n_head: the number of heads we'd like
         super().__init__()
         head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
-        self.ffwd = FeedFoward(n_embd)
-        self.ln1 = nn.LayerNorm(n_embd)
-        self.ln2 = nn.LayerNorm(n_embd)
+        self.self_attention = MultiHeadAttention(n_head, head_size)
+        self.feedforward = FeedFoward(n_embd)
+        self.layer_norm_1 = nn.LayerNorm(n_embd)
+        self.layer_norm_2 = nn.LayerNorm(n_embd)
 
     def forward(self, x):
-        x = x + self.sa(self.ln1(x))
-        x = x + self.ffwd(self.ln2(x))
+        x = x + self.self_attention(self.layer_norm_1(x))
+        x = x + self.feedforward(self.layer_norm_2(x))
         return x
 
 
@@ -137,8 +140,8 @@ class MathGPT(nn.Module):
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
         self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
-        self.ln_f = nn.LayerNorm(n_embd)  # final layer norm
-        self.lm_head = nn.Linear(n_embd, vocab_size)
+        self.layer_norm = nn.LayerNorm(n_embd)
+        self.dense_layer = nn.Linear(n_embd, vocab_size)
 
         # better init, not covered in the original GPT video, but important, will cover in followup video
         self.apply(self._init_weights)
@@ -159,8 +162,8 @@ class MathGPT(nn.Module):
         pos_emb = self.position_embedding_table(torch.arange(T, device=device))  # (T,C)
         x = tok_emb + pos_emb  # (B,T,C)
         x = self.blocks(x)  # (B,T,C)
-        x = self.ln_f(x)  # (B,T,C)
-        logits = self.lm_head(x)  # (B,T,vocab_size)
+        x = self.layer_norm(x)  # (B,T,C)
+        logits = self.dense_layer(x)  # (B,T,vocab_size)
 
         if targets is None:
             loss = None
@@ -170,24 +173,11 @@ class MathGPT(nn.Module):
             targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
 
-            # equals_token_id = encode['=']
-            # mask = torch.zeros(B * T, dtype=torch.bool, device=device)
-            #
-            # for i in range(B):
-            #     equals_positions = (idx[i] == equals_token_id).nonzero(as_tuple=False)
-            #     if len(equals_positions) > 0:
-            #         start_idx = equals_positions[0].item() + 1
-            #         mask[i * T + start_idx:i * T + T] = True
-            #
-            # if mask.sum() > 0:
-            #     loss = F.cross_entropy(logits[mask], targets[mask])
-            # else:
-            #     loss = F.cross_entropy(logits, targets)
-
         return logits, loss
 
     def generate(self, idx, max_new_tokens):
         # idx is (B, T) array of indices in the current context
+        generated = []
         for _ in range(max_new_tokens):
             # crop idx to the last block_size tokens
             idx_cond = idx[:, -block_size:]
@@ -199,9 +189,10 @@ class MathGPT(nn.Module):
             probs = F.softmax(logits, dim=-1)  # (B, C)
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
+            generated.append(idx_next)
             # append sampled index to the running sequence
             idx = torch.cat((idx, idx_next), dim=1)  # (B, T+1)
-        return idx
+        return torch.cat(generated, dim=1)
 
 
 def main():
@@ -216,29 +207,30 @@ def main():
 
     @torch.no_grad()
     def estimate_loss():
-        out = {}
+        losses_by_split = {}
         model.eval()
         for split in ['train', 'val']:
             losses = torch.zeros(eval_iters)
-            for k in range(eval_iters):
+            for iteration in range(eval_iters):
                 X, Y = get_batch(split)
                 _, loss = model(X, Y)
-                losses[k] = loss.item()
-            out[split] = losses.mean()
+                losses[iteration] = loss.item()
+            losses_by_split[split] = losses.mean()
         model.train()
-        return out
+        return losses_by_split
 
-    for iter in range(max_iters):
+    for iteration in range(max_iters):
         try:
-            if iter % eval_interval == 0 or iter == max_iters - 1:
+            if iteration % eval_interval == 0 or iteration == max_iters - 1:
                 losses = estimate_loss()
-                print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+                print(f"step {iteration}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
-            # sample a batch of data
-            xb, yb = get_batch('train')
+            x_batch, y_batch = get_batch('train')
 
-            # evaluate the loss
-            _, loss = model(xb, yb)
+            logits, loss = model(x_batch, y_batch)
+
+            optimizer.zero_grad(set_to_none=True)
+
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
@@ -248,7 +240,6 @@ def main():
 
     print('saving model weights')
     torch.save(model.state_dict(), './model_weights_part1.pth')
-
 
     # output = m.generate(prompt, max_new_tokens=6)[0].tolist()
     # print(decode(output))

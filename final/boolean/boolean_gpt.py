@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
-from final.boolean.util.model_config import large_model as config
+from final.boolean.util.model_config import medium_model as config
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -24,7 +24,7 @@ dropout = 0.2
 torch.manual_seed(1337)
 print(device)
 
-with open('data/depth2_all_operators_unsymmetric/train_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
+with open('data/depth3_all_operators_unsymmetric/train_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocabulary = ['\n', '=', 'TRUE', 'FALSE', 'AND', 'OR', 'XOR', 'NOT', '(', ')', ' ']
@@ -198,25 +198,45 @@ def main():
     model = BooleanGPT()
 
     m = model.to(device)
-    # print the number of parameters in the model
     print(sum(p.numel() for p in m.parameters()) / 1e6, 'M parameters')
 
-    # create a PyTorch optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-1)
+
+    def weighted_cross_entropy_loss(x_batch,y_batch, logits):
+        batch_dim, context_dim = x_batch.shape
+
+        previous_is_equals = torch.zeros_like(y_batch, dtype=torch.bool)
+        previous_is_equals[:, 1:] = (x_batch[:, :-1] == encode(['='])[0])
+
+        is_boolean_token = (y_batch == encode(['TRUE'])[0]) | (y_batch == encode(['FALSE'])[0])
+
+        logits_flat = logits.view(batch_dim * context_dim, -1)
+        targets_flat = y_batch.view(batch_dim * context_dim)
+
+        weights = torch.ones_like(y_batch, dtype=torch.float32)
+
+        answer_positions = previous_is_equals & is_boolean_token
+        weights[answer_positions] = 5.0
+
+        weights_flat = weights.view(batch_dim * context_dim)
+        per_token_cross_entropy = F.cross_entropy(logits_flat, targets_flat, reduction='none')
+
+        return (per_token_cross_entropy * weights_flat).sum() / weights_flat.sum()
 
     @torch.no_grad()
     def estimate_loss():
-        out = {}
+        losses_by_split = {}
         model.eval()
         for split in ['train', 'val']:
             losses = torch.zeros(eval_iters)
             for k in range(eval_iters):
-                X, Y = get_batch(split)
-                _, loss = model(X, Y)
+                x_batch, y_batch = get_batch(split)
+                logits, _ = model(x_batch, y_batch)
+                loss = weighted_cross_entropy_loss(x_batch, y_batch, logits)
                 losses[k] = loss.item()
-            out[split] = losses.mean()
+            losses_by_split[split] = losses.mean()
         model.train()
-        return out
+        return losses_by_split
 
     for iter in range(max_iters):
         try:
@@ -225,44 +245,29 @@ def main():
                 print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
             x_batch, y_batch = get_batch('train')
-            B, T = x_batch.shape
+            batch_dim, context_dim = x_batch.shape
 
             logits, _ = model(x_batch, y_batch)
             optimizer.zero_grad(set_to_none=True)
 
-            equals_id = encode(['='])[0]
-            true_id = encode(['TRUE'])[0]
-            false_id = encode(['FALSE'])[0]
+            loss = weighted_cross_entropy_loss(x_batch,y_batch, logits)
 
-            prev_is_eq = torch.zeros_like(y_batch, dtype=torch.bool)
-            prev_is_eq[:, 1:] = (x_batch[:, :-1] == equals_id)
-
-            is_truth_token = (y_batch == true_id) | (y_batch == false_id)
-
-            answer_pos = prev_is_eq & is_truth_token
-
-            # # ---- DEBUG PRINT EVERY 200 ITERS ----
-            # if iter % 200 == 0:
-            #     b = 0  # look at first example in batch
-            #     print("---- DEBUG SAMPLE ----")
-            #     print("x:", " ".join(decode([int(t)]) for t in x_batch[b]))
-            #     print("y:", " ".join(decode([int(t)]) for t in y_batch[b]))
-            #     print("answer flags:", answer_pos[b].tolist())
-            #     for t in range(T):
-            #         if answer_pos[b, t]:
-            #             prev_tok = decode([int(x_batch[b, t - 1])]) if t > 0 else "<NONE>"
-            #             cur_tok = decode([int(y_batch[b, t])])
-            #             print(f"ANSWER POS t={t}: prev='{prev_tok}' cur='{cur_tok}'")
-
-            logits_flat = logits.view(B * T, -1)
-            targets_flat = y_batch.view(B * T)
-
-            weights = torch.ones_like(y_batch, dtype=torch.float32)
-            weights[answer_pos] = 5.0  # or 3–10
-
-            weights_flat = weights.view(B * T)
-            per_token_ce = F.cross_entropy(logits_flat, targets_flat, reduction='none')
-            loss = (per_token_ce * weights_flat).sum() / weights_flat.sum()
+            # previous_is_equals = torch.zeros_like(y_batch, dtype=torch.bool)
+            # previous_is_equals[:, 1:] = (x_batch[:, :-1] == encode(['='])[0])
+            #
+            # is_boolean_token = (y_batch == encode(['TRUE'])[0]) | (y_batch == encode(['FALSE'])[0])
+            #
+            # logits_flat = logits.view(batch_dim * context_dim, -1)
+            # targets_flat = y_batch.view(batch_dim * context_dim)
+            #
+            # weights = torch.ones_like(y_batch, dtype=torch.float32)
+            #
+            # answer_positions = previous_is_equals & is_boolean_token
+            # weights[answer_positions] = 5.0
+            #
+            # weights_flat = weights.view(batch_dim * context_dim)
+            # per_token_cross_entropy = F.cross_entropy(logits_flat, targets_flat, reduction='none')
+            # loss = (per_token_cross_entropy * weights_flat).sum() / weights_flat.sum()
 
             loss.backward()
             optimizer.step()

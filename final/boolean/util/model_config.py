@@ -1,25 +1,25 @@
 xl_model = {
     "batch_size": 64,
-    "block_size": 196,
-    "n_embd": 381,
+    "block_size": 128,
+    "n_embd": 360,
     "n_head": 9,
-    "n_layer": 7,
+    "n_layer": 6,
 }
 
 large_model = {
     "batch_size": 64,
     "block_size": 128,
-    "n_embd": 182,
-    "n_head": 9,
+    "n_embd": 128,
+    "n_head": 6,
     "n_layer": 6,
 }
 
 medium_model = {
     "batch_size": 64,
     "block_size": 64,
-    "n_embd": 96,
+    "n_embd": 64,
     "n_head": 6,
-    "n_layer": 5,
+    "n_layer": 4,
 }
 
 small_model = {

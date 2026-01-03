@@ -7,8 +7,9 @@ train_add_single, test_add_single = generate_dataset(
     list(range(0, 9)),
     Operation.ADD,
     0.9,
-    extension_factor=100,
-    padded=True
+    extension_factor=50,
+    padded=True,
+    reversed=False
 )
 
 train_add_double, test_add_double = generate_dataset(
@@ -16,15 +17,17 @@ train_add_double, test_add_double = generate_dataset(
     Operation.ADD,
     0.9,
     extension_factor=4,
-    padded=True
+    padded=True,
+    reversed=False
 )
 
 train_sub_single, test_sub_single = generate_dataset(
     np.linspace(0, 9, 10).tolist(),
     Operation.SUB,
     0.9,
-    extension_factor=100,
-    padded=True
+    extension_factor=50,
+    padded=True,
+    reversed=False
 )
 
 train_sub_double, test_sub_double = generate_dataset(
@@ -32,7 +35,8 @@ train_sub_double, test_sub_double = generate_dataset(
     Operation.SUB,
     0.9,
     extension_factor=4,
-    padded=True
+    padded=True,
+    reversed=False
 )
 
 train_mult_single, test_mult_single = generate_dataset(
@@ -40,14 +44,17 @@ train_mult_single, test_mult_single = generate_dataset(
     Operation.MULT,
     0.9,
     extension_factor=100,
-    padded=True
+    padded=True,
+    reversed=False
 )
 
 train_mult_double, test_mult_double = generate_dataset(
     np.linspace(0, 19, 20).tolist(),
     Operation.MULT,
     0.9,
-    padded=True
+    extension_factor=25,
+    padded=True,
+    reversed=False
 )
 
 train_div_single, test_div_single = generate_dataset(
@@ -55,7 +62,8 @@ train_div_single, test_div_single = generate_dataset(
     Operation.DIV,
     0.9,
     extension_factor=100,
-    padded=True
+    padded=True,
+    reversed=False
 )
 
 write_to_file(

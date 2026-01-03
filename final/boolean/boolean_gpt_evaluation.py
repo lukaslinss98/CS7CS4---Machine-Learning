@@ -13,7 +13,7 @@ state_dictionary = torch.load('model_weights_part2.pth', map_location=device)
 model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
-with open('data/depth2_all_operators_unsymmetric/test_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
+with open('data/depth3_all_operators_unsymmetric/test_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 vocabulary = torch.load('boolean_vocab.pt')
@@ -21,7 +21,6 @@ vocabulary = torch.load('boolean_vocab.pt')
 encode, decode = create_encoder_decoder(vocabulary=vocabulary)
 
 number_sucess = 0
-
 
 def get_operator(expression: str) -> List[str]:
     pattern = r'\b(?:AND|OR|XOR|NOT)\b'

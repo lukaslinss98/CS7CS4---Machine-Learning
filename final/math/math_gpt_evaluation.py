@@ -1,8 +1,10 @@
-import torch
 import re
 
-from math_gpt import MathGPT
+import torch
+
 from final.decoder_encoder import create_encoder_decoder
+from final.math.util.tokenizer import NumberTokenizer
+from math_gpt import MathGPT
 
 device = 'mps' if torch.backends.mps.is_available() else 'cpu'
 
@@ -29,35 +31,40 @@ success_by_operation = {}
 number_by_operation = {}
 
 for line in text.split('\n')[:-1]:
-    expression, expected_answer = line.split('=')
+    expression, expected = line.split('=')
     operation = get_operation(expression)
     number_by_operation[operation] = number_by_operation.get(operation, 0) + 1
 
-    prompt = torch.tensor([encode(expression + '=')], dtype=torch.long, device=device)
-    output = decode(model.generate(prompt, max_new_tokens=4)[0].tolist())
-    output = output[len(expression) + 1:]
+    tokenizer =  NumberTokenizer()
+    tokenized = tokenizer.tokenize(expression + '=', padding=True)
 
-    digits = []
+    prompt = torch.tensor([encode(tokenized)], dtype=torch.long, device=device)
+    output = decode(model.generate(prompt, max_new_tokens=6)[0].tolist())
+    output = tokenizer.token_to_string(output)
+    # output = output[len(expression) + 1:]
+
+    result = []
     operants = ['+', '-']
     for c in output:
         if c.isdigit() or c in operants:
-            digits.append(c)
+            result.append(c)
         else:
             break
 
-    digits = ''.join(digits)
+    result = ''.join(result)
 
     isSucess = False
     try:
-        isSucess = int(expected_answer) == int(digits)
+        isSucess = int(expected) == int(result)
     except:
-        print(f'could not parse {expected_answer=} or {digits=}')
+        print(f'could not parse {expected=} or {result=}')
 
     if isSucess:
         number_sucess += 1
         success_by_operation[operation] = success_by_operation.get(operation, 0) + 1
 
-    print(f'{expression=}, expected: {expected_answer}, actual: {digits} | {isSucess}')
+    print(f'{expression=}, {expected=}, {result=} | {isSucess=}')
+    print()
 
 for op, nu in number_by_operation.items():
     print(

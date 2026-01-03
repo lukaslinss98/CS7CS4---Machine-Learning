@@ -20,13 +20,13 @@ def generate_dataset(numbers: List[int], op: Operation, test_split = 0.9, extens
 
             result = None
             if op == Operation.ADD:
-                result = str(num1 + num2)
+                result = num1 + num2
             elif op == Operation.SUB:
-                result = str(num1 - num2)
+                result = num1 - num2
             elif op == Operation.MULT:
-                result = str(num1 * num2)
+                result = num1 * num2
             elif op == Operation.DIV:
-                result = str(int(num1 / num2))
+                result = int(num1 / num2)
 
             if padded:
                 num1 = f'{num1:04}'
@@ -34,7 +34,7 @@ def generate_dataset(numbers: List[int], op: Operation, test_split = 0.9, extens
                 result = f'{result:04}'
 
             if reversed:
-                result = result[::-1]
+                result = str(result)[::-1]
                 if result[-1] == '-':
                     result = '-' + result[:-1]
 
