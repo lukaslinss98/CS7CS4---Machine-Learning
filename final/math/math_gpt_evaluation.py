@@ -1,10 +1,9 @@
 import re
 
 import torch
-from pycparser.ply.ctokens import t_XOR
 
 from final.decoder_encoder import create_encoder_decoder
-from final.math.util.tokenizer import NumberTokenizer
+from final.math.util.tokenizer import NumberPositionTokenizer
 from math_gpt import MathGPT
 
 device = 'mps' if torch.backends.mps.is_available() else 'cpu'
@@ -14,7 +13,8 @@ state_dictionary = torch.load('model_weights_part1.pth', map_location=device)
 model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
-with open('/Users/lukas/dev/machine_learning/final/math/datasets/curriculum/test_curriculum_mixed.txt', 'r', encoding='utf-8') as f:
+with open('/Users/lukas/dev/machine_learning/final/math/datasets/curriculum/test_curriculum_mixed.txt', 'r',
+          encoding='utf-8') as f:
     text = f.read()
 
 vocab = torch.load('math_vocab.pt')
@@ -35,7 +35,7 @@ for line in text.split('\n')[:-1]:
     operation = get_operation(expression)
     number_by_operation[operation] = number_by_operation.get(operation, 0) + 1
 
-    tokenizer =  NumberTokenizer()
+    tokenizer = NumberPositionTokenizer()
     tokenized = tokenizer.tokenize(expression + '=', padding=True)
 
     prompt = torch.tensor([encode(tokenized)], dtype=torch.long, device=device)

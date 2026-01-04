@@ -1,9 +1,9 @@
 xl_model = {
     "batch_size": 64,
     "block_size": 196,
-    "n_embd": 381,
+    "n_embd": 215,
     "n_head": 9,
-    "n_layer": 6,
+    "n_layer": 9,
 }
 
 large_model = {
@@ -25,7 +25,7 @@ medium_model = {
 small_model = {
     "batch_size": 64,
     "block_size": 32,
-    "n_embd": 32,
+    "n_embd": 52,
     "n_head": 3,
     "n_layer": 3,
 }

@@ -1,0 +1,29 @@
+small model curriculum learning:
+operation= +, success: 22, total: 260, success rate: 0.08461538461538462
+operation= -, success: 11, total: 261, success rate: 0.0421455938697318
+operation= /, success: 161, total: 260, success rate: 0.6192307692307693
+operation= *, success: 37, total: 113, success rate: 0.3274336283185841
+Total Success Rate: 0.25838926174496646
+
+medium model curriculum learning:
+operation= +, success: 242, total: 260, success rate: 0.9307692307692308
+operation= -, success: 230, total: 261, success rate: 0.8812260536398467
+operation= /, success: 228, total: 260, success rate: 0.8769230769230769
+operation= *, success: 90, total: 113, success rate: 0.7964601769911505
+Total Success Rate: 0.883668903803132
+
+large model curriculum learning:
+operation= +, success: 252, total: 260, success rate: 0.9692307692307692
+operation= -, success: 246, total: 261, success rate: 0.9425287356321839
+operation= /, success: 237, total: 260, success rate: 0.9115384615384615
+operation= *, success: 92, total: 113, success rate: 0.8141592920353983
+Total Success Rate: 0.9250559284116331
+
+xl model curriculum learning:
+operation= +, success: 256, total: 260, success rate: 0.9846153846153847
+operation= -, success: 239, total: 261, success rate: 0.9157088122605364
+operation= /, success: 238, total: 260, success rate: 0.9153846153846154
+operation= *, success: 87, total: 113, success rate: 0.7699115044247787
+Total Success Rate: 0.9172259507829977
+
+

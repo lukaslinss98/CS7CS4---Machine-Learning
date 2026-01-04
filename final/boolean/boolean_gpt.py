@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
-from final.boolean.util.model_config import small_model as config
+from final.boolean.util.model_config import xl_model as config
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -271,7 +271,7 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig('./plots/boolean_gpt_ce_loss.png', dpi=200)
+    plt.savefig('./plots/boolean_gpt_xl.png', dpi=200)
     plt.show()
 
 if __name__ == '__main__':

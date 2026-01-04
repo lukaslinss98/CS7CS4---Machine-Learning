@@ -5,8 +5,8 @@ from torch.nn import functional as F
 
 from final.decoder_encoder import create_encoder_decoder
 from final.math.datasets.curriculum.curriculum import curriculum
-from final.math.util.model_config import medium_model as config
-from final.math.util.tokenizer import NumberTokenizer
+from final.math.util.model_config import xl_model as config
+from final.math.util.tokenizer import NumberPositionTokenizer
 
 # hyperparameters
 batch_size = config['batch_size']
@@ -29,7 +29,7 @@ print(device)
 curriculum_part1, curriculum_part2, curriculum_part3 = curriculum
 full_curriculum = '\n'.join(curriculum)
 
-tokenizer = NumberTokenizer()
+tokenizer = NumberPositionTokenizer()
 tokenized_curriculum = tokenizer.tokenize(full_curriculum, padding=True)
 vocabulary = sorted(list(set(tokenized_curriculum)))
 torch.save(vocabulary, 'math_vocab.pt')
@@ -271,7 +271,7 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig('./plots/math_gpt_ce_loss.png', dpi=200)
+    plt.savefig('./plots/math_gpt_xl.png', dpi=200)
     plt.show()
 
 

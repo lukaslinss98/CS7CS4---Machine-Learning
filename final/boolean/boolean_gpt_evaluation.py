@@ -1,7 +1,7 @@
-import re
+import random
 
 import torch
-from typing import List
+
 from final.boolean.boolean_gpt import BooleanGPT
 from final.boolean.util.tokenizer import word_tokenizer
 from final.decoder_encoder import create_encoder_decoder
@@ -13,6 +13,8 @@ state_dictionary = torch.load('model_weights_part2.pth', map_location=device)
 model.load_state_dict(state_dict=state_dictionary)
 model.to(device)
 model.eval()
+use_baseline = False
+
 with open('./data/split_datasets/test_mix_depth_all_unsymmetric.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
@@ -49,7 +51,12 @@ for line in text.split('\n')[:-1]:
     tokenized_expression.append('=')
 
     prompt = torch.tensor([encode(tokenized_expression)], dtype=torch.long, device=device)
-    output = decode(model.generate(prompt, max_new_tokens=2)[0].tolist())
+    output = ''
+    if use_baseline:
+        output = random.choice(['TRUE', 'FALSE'])
+    else:
+        output = decode(model.generate(prompt, max_new_tokens=2)[0].tolist())
+
     isSucess = expected_answer.strip() == output.strip()
 
     if isSucess:

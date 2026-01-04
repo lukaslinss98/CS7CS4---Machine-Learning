@@ -1,0 +1,23 @@
+small model:
+depth=3 success: 218, total: 406, success rate: 0.5369458128078818
+depth=2 success: 37, total: 60, success rate: 0.6166666666666667
+depth=1 success: 1, total: 5, success rate: 0.2
+Success Rate: 0.5435244161358811
+
+medium model:
+depth=3 success: 246, total: 406, success rate: 0.6059113300492611
+depth=2 success: 47, total: 60, success rate: 0.7833333333333333
+depth=1 success: 3, total: 5, success rate: 0.6
+Success Rate: 0.6284501061571125
+
+large model:
+depth=3 success: 266, total: 406, success rate: 0.6551724137931034
+depth=2 success: 55, total: 60, success rate: 0.9166666666666666
+depth=1 success: 4, total: 5, success rate: 0.8
+Success Rate: 0.6900212314225053
+
+xl model:
+depth=3 success: 399, total: 406, success rate: 0.9827586206896551
+depth=2 success: 59, total: 60, success rate: 0.9833333333333333
+depth=1 success: 5, total: 5, success rate: 1.0
+Success Rate: 0.9830148619957537

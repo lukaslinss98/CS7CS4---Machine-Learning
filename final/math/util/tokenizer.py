@@ -2,7 +2,7 @@ import unittest
 from typing import List
 
 
-class NumberTokenizer:
+class NumberPositionTokenizer:
 
     def __init__(self):
         self.units = ['U', 'T', 'H']
@@ -90,35 +90,35 @@ class TestTokenizer(unittest.TestCase):
 
     def test_single_digit(self):
         given = '1+2=3'
-        tokenized = NumberTokenizer().tokenize(given)
+        tokenized = NumberPositionTokenizer().tokenize(given)
         self.assertEqual(['U1', '+', 'U2', '=', 'U3'], tokenized)
 
     def test_double_digit(self):
         given = '20+35=45'
-        actual = NumberTokenizer().tokenize(given)
+        actual = NumberPositionTokenizer().tokenize(given)
         self.assertEqual(['T2', 'U0', '+', 'T3', 'U5', '=', 'T4', 'U5'], actual)
 
     def test_triple_digit(self):
         given = '100+302=402'
-        actual = NumberTokenizer().tokenize(given)
+        actual = NumberPositionTokenizer().tokenize(given)
         self.assertEqual(['H1', 'T0', 'U0', '+', 'H3', 'T0', 'U2', '=', 'H4', 'T0', 'U2'], actual)
 
     def test_padding(self):
         given = '20+35=45'
-        actual = NumberTokenizer().tokenize(given, padding=True)
+        actual = NumberPositionTokenizer().tokenize(given, padding=True)
         self.assertEqual(['H0', 'T2', 'U0', '+', 'H0', 'T3', 'U5', '=', 'H0', 'T4', 'U5'], actual)
 
     def test_token_to_string(self):
         given = 'T2U1+U2=T2U3'
-        actual = NumberTokenizer().token_to_string(given)
+        actual = NumberPositionTokenizer().token_to_string(given)
         self.assertEqual('21+2=23', actual)
 
     def test_padded_token_to_string(self):
         given = 'H0T1U0+H0T2U2=H0T3U2\n'
-        actual = NumberTokenizer().token_to_string(given)
+        actual = NumberPositionTokenizer().token_to_string(given)
         self.assertEqual('10+22=32\n', actual)
 
     def test_padded_token_with_only_zeros_to_string(self):
         given = 'H0T0U0+H0T0U0=H0T0U0\n'
-        actual = NumberTokenizer().token_to_string(given)
+        actual = NumberPositionTokenizer().token_to_string(given)
         self.assertEqual('0+0=0\n', actual)
